@@ -39,6 +39,8 @@ module axi_lite_memory #(
     reg [AXIL_ADDR_WIDTH-1:0] araddr_buff, awaddr_buff;
     reg [AXIL_DATA_WIDTH-1:0] wdata_nxt;
     reg [AXIL_DATA_WIDTH-1:0] wdata_buff;
+    reg [AXIL_DATA_WIDTH/8-1:0]	wstrb_nxt;
+    reg [AXIL_DATA_WIDTH/8-1:0] wstrb_buff;
     
     assign bresp = 2'b00; // set to "okay" response - to be change later
     assign rresp = 2'b00; // set to "okay" response - to be change later
@@ -72,10 +74,12 @@ module axi_lite_memory #(
         if (wready == 1)
         begin
             wdata_nxt = wdata;
+            wstrb_nxt = wstrb;
         end
         else
         begin
             wdata_nxt = wdata_buff;
+            wstrb_nxt = wstrb_buff;
         end
     end
 //------------------------------------------------------------------------------------------------------------------------
@@ -164,10 +168,12 @@ module axi_lite_memory #(
             if (wready == 1)
             begin
                 wdata_buff <= wdata;
+                wstrb_buff <= wstrb;
             end
             else
             begin
                 wdata_buff <= 0;
+                wstrb_buff <= 0;
             end
 			
 			if( ((awvalid == 1) || (awready == 0)) && ((wvalid == 1) || (wready == 0)) )
@@ -181,7 +187,15 @@ module axi_lite_memory #(
 			
 			if( ((bvalid == 0) || (bready == 1)) && ((awvalid == 1) || (awready == 0)) && ((wvalid == 1) || (wready == 0)) )
 			begin
-			     mem[awaddr_nxt] <= wdata_nxt; // write to memory operation
+			     //mem[awaddr_nxt] <= wdata_nxt; // write to memory operation
+			    if (wstrb[0])
+                    mem[awaddr_nxt][7:0]<= wdata_nxt[7:0];
+                if (wstrb[1])
+                    mem[awaddr_nxt][15:8]<= wdata_nxt[15:8];
+                if (wstrb[2])
+                    mem[awaddr_nxt][23:16]<= wdata_nxt[23:16];
+                if (wstrb[3])
+                    mem[awaddr_nxt][31:24]<= wdata_nxt[31:24];
 			end
 		end
 	end
